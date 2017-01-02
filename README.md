@@ -4,7 +4,7 @@ LITCRYPT
 It is abbreviation from "Literal Encryption", a Rust compiler plugin to encrypt
 text literal using simple "XOR" algorithm.
 
-LITCRYPT let's you hide your static string literal on the binary from naughty eyes seamlessly
+LITCRYPT let's you hide your static string literal in the binary from naughty eyes seamlessly
 and protect your valuable app from illegal cracking activity.
 
 LITCRYPT works by encrypting string literal during compile time and the encrypted
@@ -16,17 +16,17 @@ USAGE
 Dependencies:
 
 ```rust
-    [dependencies]
-    litcrypt = { git = "https://github.com/anvie/litcrypt.rs" }
-    xor = { git = "https://github.com/anvie/xor-rs" }
+[dependencies]
+litcrypt = { git = "https://github.com/anvie/litcrypt.rs" }
+xor = { git = "https://github.com/anvie/xor-rs" }
 ```
 
 Example:
 
 ```rust
-    fn main(){
-        println!("his name is: {}", lc!("Voldemort"));
-    }
+fn main(){
+    println!("his name is: {}", lc!("Voldemort"));
+}
 ```
 
 Before compiling, make sure you already set encryption key in `XOR_ENCRYPT_KEY` environment variable,
