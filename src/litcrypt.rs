@@ -36,14 +36,14 @@ fn expand_litcrypt(cx: &mut ExtCtxt, sp: Span, args: &[TokenTree])
     if args.len() != 1 {
         cx.span_err(
             sp,
-            &format!("argument should be a single identifier, but got {} arguments", args.len()));
+            &format!("argument should be a single literal text, but got {} arguments", args.len()));
         return DummyResult::any(sp);
     }
 
     let text = match args[0] {
         TokenTree::Token(_, token::Literal(token::Lit::Str_(name), _)) => name.to_string(),
         _ => {
-            cx.span_err(sp, "argument should be a single identifier");
+            cx.span_err(sp, "argument should be a single literal text");
             return DummyResult::any(sp);
         }
     };
