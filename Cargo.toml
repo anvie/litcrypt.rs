@@ -1,0 +1,14 @@
+[package]
+name = "litcrypt"
+version = "0.0.1"
+
+[lib]
+name = "litcrypt"
+plugin = true
+path = "src/litcrypt.rs"
+
+[dependencies]
+rustc-serialize = "0.3"
+aster = { version = "*", default_features = false }
+# litcrypt = { path = "../litcrypt", version = "*" }
+xor = { path = "./xor-rs" }
