@@ -1,3 +1,0 @@
-[submodule "xor-rs"]
-	path = xor-rs
-	url = git@github.com:anvie/xor-rs.git
