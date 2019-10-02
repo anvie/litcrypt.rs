@@ -18,7 +18,6 @@ Dependencies:
 ```rust
 [dependencies]
 litcrypt = { git = "https://github.com/anvie/litcrypt.rs" }
-xor = { git = "https://github.com/anvie/xor-rs" }
 ```
 
 Example:
