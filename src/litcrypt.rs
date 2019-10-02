@@ -5,75 +5,90 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![crate_type="dylib"]
+#![crate_type = "dylib"]
 #![feature(plugin_registrar, rustc_private)]
 #![feature(slice_patterns)]
 
-extern crate syntax;
-extern crate syntax_pos;
+// This link to rustc_driver is fix for
+// Compiler error: "thread 'rustc' panicked at 'cannot access a scoped thread local variable without calling `set` first'".
+// as discussed in https://github.com/rust-lang/rust/issues/62717
+// extern crate rustc_interface;
+extern crate rustc_driver;
+
 extern crate rustc;
 extern crate rustc_plugin;
-extern crate rustc_serialize as serialize;
-extern crate aster;
+extern crate syntax;
+extern crate syntax_pos;
 extern crate xor;
 
 use std::env;
 
-use syntax::parse::token;
-use syntax::tokenstream::TokenTree;
-use syntax::ext::base::{ExtCtxt, MacResult, DummyResult, MacEager};
-use syntax_pos::Span;
 use rustc_plugin::Registry;
-// use aster::invoke::Invoke;
-use aster::path::PathBuilder;
+use std::rc::Rc;
+use syntax::ast::{Ident, LitKind};
+use syntax::ext::base::{DummyResult, ExtCtxt, MacEager, MacResult};
+use syntax::parse::token::{self, TokenKind};
+use syntax::tokenstream::TokenTree;
+use syntax_pos::Span;
 
-use serialize::base64::{STANDARD, ToBase64};
+fn to_string(t: &token::Lit) -> String {
+    let s = t.to_string();
+    (&s[1..s.len() - 1]).to_string()
+}
 
-
-fn expand_litcrypt(cx: &mut ExtCtxt, sp: Span, args: &[TokenTree])
-        -> Box<MacResult + 'static> {
-
+fn expand_litcrypt(cx: &mut ExtCtxt, sp: Span, args: &[TokenTree]) -> Box<dyn MacResult + 'static> {
     if args.len() != 1 {
         cx.span_err(
             sp,
-            &format!("argument should be a single literal text, but got {} arguments", args.len()));
+            &format!(
+                "argument should be a single literal text, but got {} arguments",
+                args.len()
+            ),
+        );
         return DummyResult::any(sp);
     }
 
-    let text = match args[0] {
-        TokenTree::Token(_, token::Literal(token::Lit::Str_(name), _)) => name.to_string(),
+    let text = match &args[0] {
+        TokenTree::Token(t) => match t.kind {
+            TokenKind::Literal(tt) => to_string(&tt),
+            _ => {
+                cx.span_err(sp, "invalid token kind");
+                return DummyResult::any(sp);
+            }
+        },
         _ => {
             cx.span_err(sp, "argument should be a single literal text");
             return DummyResult::any(sp);
         }
     };
 
-    let xor_encrypt_key = match env::var("XOR_ENCRYPT_KEY"){
+    let xor_encrypt_key = match env::var("XOR_ENCRYPT_KEY") {
         Ok(a) => a,
         Err(_) => {
-            cx.span_err(sp, "you needs to specify encrypt key via XOR_ENCRYPT_KEY environment variable.");
+            cx.span_err(
+                sp,
+                "you needs to specify encrypt key via XOR_ENCRYPT_KEY environment variable.",
+            );
             return DummyResult::any(sp);
         }
     };
 
     let encrypted = xor::xor(text.as_bytes(), xor_encrypt_key.as_bytes());
-    let _encrypted = encrypted.to_base64(STANDARD);
 
-    println!("[litcrypt] encrypted: `{}` -> `{}`", text, _encrypted);
+    let encrypted_key: Vec<u8> = xor::xor(&xor_encrypt_key.as_bytes(), b"l33t");
 
-    let path = PathBuilder::new()
-                .span(sp)
-                .global()
-                .ids(&["xor","decrypt"])
-                .build();
+    let rv = {
+        cx.expr_call_global(
+            sp,
+            vec![Ident::from_str("xor"), Ident::from_str("decrypt_bytes")],
+            vec![
+                cx.expr_lit(sp, LitKind::ByteStr(Rc::new(encrypted))),
+                cx.expr_lit(sp, LitKind::ByteStr(Rc::new(encrypted_key))),
+            ],
+        )
+    };
 
-    let builder = aster::AstBuilder::new().span(sp);
-
-    let _lit = builder.expr().lit().str(_encrypted.as_str());
-    let _key = builder.expr().lit().str(xor_encrypt_key.as_str());
-    let _expr = builder.expr().call().build_path(path).with_arg(_lit).with_arg(_key).build();
-
-    MacEager::expr(_expr)
+    MacEager::expr(rv)
 }
 
 #[plugin_registrar]

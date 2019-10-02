@@ -7,7 +7,7 @@
 
 extern crate xor;
 
-fn main(){
+fn main() {
     // uncomment this for plain (non pre-compile-encrypted string)
     // println!("his name is: {}", "Voldemort");
     println!("his name is: {}", lc!("Voldemort"));
