@@ -54,10 +54,7 @@ struct InfiniteByteIterator<'a> {
 
 impl<'a> InfiniteByteIterator<'a> {
     pub fn new(bytes: &'a [u8]) -> InfiniteByteIterator<'a> {
-        InfiniteByteIterator {
-            bytes,
-            index: 0,
-        }
+        InfiniteByteIterator { bytes, index: 0 }
     }
 }
 
