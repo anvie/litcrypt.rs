@@ -2,12 +2,29 @@
 //!
 //! This functions might be useful to play with
 //! [the matasano crypto challenges](http://cryptopals.com).
+//! 
+//! 
 
-extern crate rustc_serialize as serialize;
-
-#[cfg(test)]
-#[macro_use(expect)]
-extern crate expectest;
+//
+// Copyright (c) 2014 Aleksey Kuznetsov
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
 /// Returns result of a XOR operation applied to a `source` byte sequence.
 ///
@@ -64,7 +81,7 @@ fn next_index(index: usize, count: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use expectest::prelude::*;
+    use crate::expectest::prelude::*;
 
     #[test]
     fn xor_valid_result() {
@@ -100,18 +117,4 @@ mod tests {
         let result = xor_with_byte(source, 23);
         expect!(result).to(be_equal_to([23, 22, 21, 20]));
     }
-}
-
-use serialize::base64::FromBase64;
-
-pub fn decrypt(encrypted: &'static str, encrypt_key: &str) -> String {
-    let decoded = encrypted.from_base64().unwrap();
-    let decrypted = xor(&decoded[..], encrypt_key.as_bytes());
-    String::from_utf8(decrypted).unwrap()
-}
-
-pub fn decrypt_bytes(encrypted: &[u8], encrypt_key: &[u8]) -> String {
-    let decoded_key = xor(encrypt_key, b"l33t");
-    let decrypted = xor(&encrypted[..], &decoded_key);
-    String::from_utf8(decrypted).unwrap()
 }

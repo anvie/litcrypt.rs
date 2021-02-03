@@ -23,21 +23,26 @@ litcrypt = { git = "https://github.com/anvie/litcrypt.rs" }
 Example:
 
 ```rust
+#[macro_use]
+extern crate litcrypt;
+
+use_litcrypt!("MY-SECRET-SPELL");
+
 fn main(){
     println!("his name is: {}", lc!("Voldemort"));
 }
 ```
 
-Before compiling, make sure you already set encryption key in `XOR_ENCRYPT_KEY` environment variable,
+`use_litcrypt!` macro call should be called first for initialization before you can
+use `lc!` macro function. The first parameter is your secret key used for encrypt your
+literal string. This key is also encrypted and will not visible under static analyzer.
+
+You can also override the key using environment variable called `LITCRYPT_ENCRYPT_KEY`
 e.g:
 
-    $ export XOR_ENCRYPT_KEY="myverysuperdupermegaultrasecretkey"
+    $ export LITCRYPT_ENCRYPT_KEY="myverysuperdupermegaultrasecretkey"
 
-When compiling you may notice output like this:
-
-    [litcrypt] encrypted: `Voldemort` -> `Ow4CEAwOAAAR`
-
-That is LITCRYPT in action encrypting every string literal placed in `lc!`.
+Litcrypt will encrypt every string you have written inside `lc!` statically.
 
 Check the output binary using `strings` command, e.g:
 
@@ -45,7 +50,6 @@ Check the output binary using `strings` command, e.g:
 
 If the output is blank then your valuable string in your app is safe from static analyzer tool
 like Hexeditor etc.
-
 
 For working example code see `./examples` directory, and test it using:
 

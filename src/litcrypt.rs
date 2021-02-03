@@ -1,97 +1,153 @@
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
+#[macro_use]
+extern crate lazy_static;
+extern crate proc_macro;
+extern crate proc_macro2;
+extern crate quote;
 
-#![crate_type = "dylib"]
-#![feature(plugin_registrar, rustc_private)]
-#![feature(slice_patterns)]
+#[cfg(test)]
+#[macro_use(expect)]
+extern crate expectest;
 
-// This link to rustc_driver is fix for
-// Compiler error: "thread 'rustc' panicked at 'cannot access a scoped thread local variable without calling `set` first'".
-// as discussed in https://github.com/rust-lang/rust/issues/62717
-// extern crate rustc_interface;
-extern crate rustc_driver;
-
-extern crate rustc;
-extern crate rustc_plugin;
-extern crate syntax;
-extern crate syntax_pos;
-extern crate xor;
-
+use proc_macro::{TokenStream, TokenTree};
+use proc_macro2::Literal;
+use quote::quote;
 use std::env;
 
-use rustc_plugin::Registry;
-use std::rc::Rc;
-use syntax::ast::{Ident, LitKind};
-use syntax::ext::base::{DummyResult, ExtCtxt, MacEager, MacResult};
-use syntax::parse::token::{self, TokenKind};
-use syntax::tokenstream::TokenTree;
-use syntax_pos::Span;
+use std::sync::{Arc, Mutex};
 
-fn to_string(t: &token::Lit) -> String {
-    let s = t.to_string();
-    (&s[1..s.len() - 1]).to_string()
+mod xor;
+
+lazy_static! {
+    static ref MAGIC_SPELL: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
 }
 
-fn expand_litcrypt(cx: &mut ExtCtxt, sp: Span, args: &[TokenTree]) -> Box<dyn MacResult + 'static> {
-    if args.len() != 1 {
-        cx.span_err(
-            sp,
-            &format!(
-                "argument should be a single literal text, but got {} arguments",
-                args.len()
-            ),
-        );
-        return DummyResult::any(sp);
+#[proc_macro]
+pub fn use_litcrypt(tokens: TokenStream) -> TokenStream {
+    let magic_spell = env::var("LITCRYPT_ENCRYPT_KEY").ok().or_else(|| {
+        tokens
+            .into_iter()
+            .find(|a| match a {
+                TokenTree::Literal(_) => true,
+                _ => false,
+            })
+            .map(|a| match a {
+                TokenTree::Literal(lit) => {
+                    let s = lit.to_string();
+                    String::from(&s[1..s.len() - 1])
+                }
+                _ => "default-secret-word".to_string(),
+            })
+    });
+
+    {
+        let mut m_spell = MAGIC_SPELL.lock().unwrap();
+        *m_spell = magic_spell.clone();
     }
-
-    let text = match &args[0] {
-        TokenTree::Token(t) => match t.kind {
-            TokenKind::Literal(tt) => to_string(&tt),
-            _ => {
-                cx.span_err(sp, "invalid token kind");
-                return DummyResult::any(sp);
+    // env::set_var("LITCRYPT_ENCRYPT_KEY", magic_spell.as_ref().map(|a| a.to_string()).unwrap());
+    let encdec_func = quote! {
+        pub mod litcrypt_internal {
+            // This XOR code taken from https://github.com/zummenix/xor-rs
+            /// Returns result of a XOR operation applied to a `source` byte sequence.
+            ///
+            /// `key` will be an infinitely repeating byte sequence.
+            pub fn xor(source: &[u8], key: &[u8]) -> Vec<u8> {
+                match key.len() {
+                    0 => source.into(),
+                    1 => xor_with_byte(source, key[0]),
+                    _ => {
+                        let key_iter = InfiniteByteIterator::new(key);
+                        source.iter().zip(key_iter).map(|(&a, b)| a ^ b).collect()
+                    }
+                }
             }
-        },
-        _ => {
-            cx.span_err(sp, "argument should be a single literal text");
-            return DummyResult::any(sp);
+
+            /// Returns result of a XOR operation applied to a `source` byte sequence.
+            ///
+            /// `byte` will be an infinitely repeating byte sequence.
+            pub fn xor_with_byte(source: &[u8], byte: u8) -> Vec<u8> {
+                source.iter().map(|&a| a ^ byte).collect()
+            }
+
+            struct InfiniteByteIterator<'a> {
+                bytes: &'a [u8],
+                index: usize,
+            }
+
+            impl<'a> InfiniteByteIterator<'a> {
+                pub fn new(bytes: &'a [u8]) -> InfiniteByteIterator<'a> {
+                    InfiniteByteIterator {
+                        bytes: bytes,
+                        index: 0,
+                    }
+                }
+            }
+
+            impl<'a> Iterator for InfiniteByteIterator<'a> {
+                type Item = u8;
+                fn next(&mut self) -> Option<u8> {
+                    let byte = self.bytes[self.index];
+                    self.index = next_index(self.index, self.bytes.len());
+                    Some(byte)
+                }
+            }
+
+            fn next_index(index: usize, count: usize) -> usize {
+                if index + 1 < count {
+                    index + 1
+                } else {
+                    0
+                }
+            }
+
+            pub fn decrypt_bytes(encrypted: &[u8], encrypt_key: &[u8]) -> String {
+                let decrypted = xor(&encrypted[..], &encrypt_key);
+                String::from_utf8(decrypted).unwrap()
+            }
         }
     };
-
-    let xor_encrypt_key = match env::var("XOR_ENCRYPT_KEY") {
-        Ok(a) => a,
-        Err(_) => {
-            cx.span_err(
-                sp,
-                "you needs to specify encrypt key via XOR_ENCRYPT_KEY environment variable.",
-            );
-            return DummyResult::any(sp);
+    let result = if let Some(ekey) = magic_spell {
+        let ekey = xor::xor(ekey.as_bytes(), b"l33t");
+        let ekey = Literal::byte_string(&ekey);
+        quote! {
+            static LITCRYPT_ENCRYPT_KEY: &'static [u8] = #ekey;
+            #encdec_func
+        }
+    } else {
+        let ekey = xor::xor(b"default-secret-word", b"l33t");
+        let ekey = Literal::byte_string(&ekey);
+        quote! {
+            static LITCRYPT_ENCRYPT_KEY: &'static [u8] = #ekey;
+            #encdec_func
         }
     };
-
-    let encrypted = xor::xor(text.as_bytes(), xor_encrypt_key.as_bytes());
-
-    let encrypted_key: Vec<u8> = xor::xor(&xor_encrypt_key.as_bytes(), b"l33t");
-
-    let rv = {
-        cx.expr_call_global(
-            sp,
-            vec![Ident::from_str("xor"), Ident::from_str("decrypt_bytes")],
-            vec![
-                cx.expr_lit(sp, LitKind::ByteStr(Rc::new(encrypted))),
-                cx.expr_lit(sp, LitKind::ByteStr(Rc::new(encrypted_key))),
-            ],
-        )
-    };
-
-    MacEager::expr(rv)
+    result.into()
 }
 
-#[plugin_registrar]
-pub fn plugin_registrar(reg: &mut Registry) {
-    reg.register_macro("lc", expand_litcrypt);
+#[proc_macro]
+pub fn lc(_item: TokenStream) -> TokenStream {
+    let mut something = String::from("");
+    for tok in _item {
+        something = match tok {
+            TokenTree::Literal(lit) => lit.to_string(),
+            _ => "<unknown>".to_owned(),
+        }
+    }
+    something = String::from(&something[1..something.len() - 1]);
+    let ekey = {
+        let m_spell = MAGIC_SPELL.lock().unwrap();
+        (*m_spell).clone()
+    };
+    let encrypt_key = match ekey {
+        Some(ref a) => a.as_bytes(),
+        None => b"default-secret-word",
+    };
+    let encrypt_key = xor::xor(encrypt_key, b"l33t");
+    let encrypted = xor::xor(&something.as_bytes(), &encrypt_key);
+    let encrypted = Literal::byte_string(&encrypted);
+
+    let result = quote! {
+        crate::litcrypt_internal::decrypt_bytes(#encrypted, crate::LITCRYPT_ENCRYPT_KEY)
+    };
+
+    result.into()
 }

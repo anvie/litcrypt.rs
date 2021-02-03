@@ -1,11 +1,23 @@
 [package]
 name = "litcrypt"
-version = "0.0.1"
+authors = ['Robin Syihab (r@ansvia.com)']
+version = "0.2.0"
+description = "Let's encrypt your string statically during compile time"
+license = "Apache-2.0"
+repository = "https://github.com/anvie/litcrypt.rs"
+readme = "README.md"
+keywords = ["litcrypt", "encrypt", "compile"]
 
 [lib]
-name = "litcrypt"
-plugin = true
+proc-macro = true
 path = "src/litcrypt.rs"
 
+[dev-dependencies]
+expectest = { version = "0.12.0", features = [] }
+
 [dependencies]
-xor = { path = "./xor-rs" }
+quote = "1.0.8"
+proc-macro2 = "1.0.24"
+lazy_static = "1.4.0"
+
+
