@@ -13,7 +13,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! litcrypt = "0.2.0"
+//! litcrypt = "0.2"
 //! ```
 //!
 //! # Example
@@ -35,7 +35,7 @@
 //!
 //! Only after that can you use the [`lc!`] macro.
 //!
-//! You can also override the key using an environment variable called `LITCRYPT_ENCRYPT_KEY` e.g:
+//! You can also override the key using an environment variable `LITCRYPT_ENCRYPT_KEY` e.g:
 //! ```bash
 //! ❯ export LITCRYPT_ENCRYPT_KEY="myverysuperdupermegaultrasecretkey"
 //! ```

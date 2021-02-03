@@ -17,7 +17,7 @@ Dependencies:
 
 ```rust
 [dependencies]
-litcrypt = "0.2.0"
+litcrypt = "0.2"
 ```
 
 Example:
@@ -37,7 +37,7 @@ fn main(){
 use `lc!` macro function. The first parameter is your secret key used for encrypt your
 literal string. This key is also encrypted and will not visible under static analyzer.
 
-You can also override the key using environment variable called `LITCRYPT_ENCRYPT_KEY`
+You can also override the key using environment variable `LITCRYPT_ENCRYPT_KEY`
 e.g:
 
     $ export LITCRYPT_ENCRYPT_KEY="myverysuperdupermegaultrasecretkey"
