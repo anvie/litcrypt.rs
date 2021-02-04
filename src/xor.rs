@@ -2,8 +2,8 @@
 //!
 //! This functions might be useful to play with
 //! [the matasano crypto challenges](http://cryptopals.com).
-//! 
-//! 
+//!
+//!
 
 //
 // Copyright (c) 2014 Aleksey Kuznetsov
@@ -55,7 +55,7 @@ struct InfiniteByteIterator<'a> {
 impl<'a> InfiniteByteIterator<'a> {
     pub fn new(bytes: &'a [u8]) -> InfiniteByteIterator<'a> {
         InfiniteByteIterator {
-            bytes: bytes,
+            bytes,
             index: 0,
         }
     }

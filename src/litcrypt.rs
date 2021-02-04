@@ -1,3 +1,61 @@
+//! # LitCrypt
+//! The name is an abbreviation of ‘Literal Encryption’ – a Rust compiler plugin to encrypt
+//! text literals using the [XOR cipher](https://en.wikipedia.org/wiki/XOR_cipher).
+//!
+//! LitCrypt let’s you hide your static string literal in the binary from naughty eyes and protect
+//! your app from illegal cracking activity.
+//!
+//! LitCrypt works by encrypting string literals during compile time. An encrypted string remains
+//! encrypted both on disk and in memory during runtime. It is decypted only when used.
+//!
+//! ## Usage
+//! In `Cargo.toml`, add:
+//!
+//! ```toml
+//! [dependencies]
+//! litcrypt = "0.2.0"
+//! ```
+//!
+//! # Example
+//!
+//! ```rust
+//! #[macro_use]
+//! extern crate litcrypt;
+//!
+//! use_litcrypt!("MY-SECRET-SPELL");
+//!
+//! fn main(){
+//!     println!("his name is: {}", lc!("Voldemort"));
+//! }
+//! ```
+//!
+//! The [`use_litcrypt!`] macro must be called first, for initialization. Its parameter is the
+//! secret key that is used to encrypt all [`lc!`]-wrapped string literal(s).
+//! This key is also encrypted and will not visible in a static analyzer.
+//!
+//! Only after that can you use the [`lc!`] macro.
+//!
+//! You can also override the key using an environment variable called `LITCRYPT_ENCRYPT_KEY` e.g:
+//! ```bash
+//! ❯ export LITCRYPT_ENCRYPT_KEY="myverysuperdupermegaultrasecretkey"
+//! ```
+//!
+//! LitCrypt will statically encrypt every string encapsulated in an `lc!` macro.
+//!
+//! Check the output binary using the `strings` command, e.g:
+//!
+//! ```bash
+//! ❯ strings target/debug/my_valuable_app | grep Voldemort
+//! ```
+//!
+//! If the output is blank then the resp. strings in your app are safe from a static analyzer tool
+//! like a hex editor.
+//!
+//! For an example see the `./examples` directory:
+//!
+//! ```bash
+//! ❯ cargo run --example simple
+//! ```
 #[macro_use]
 extern crate lazy_static;
 extern crate proc_macro;
@@ -21,15 +79,15 @@ lazy_static! {
     static ref MAGIC_SPELL: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
 }
 
+/// Sets the encryption key used for encrypting subsequence strings wrapped in a [`lc!`] macro.
+///
+/// This key is also encrypted an  will not visible in a static analyzer.
 #[proc_macro]
 pub fn use_litcrypt(tokens: TokenStream) -> TokenStream {
     let magic_spell = env::var("LITCRYPT_ENCRYPT_KEY").ok().or_else(|| {
         tokens
             .into_iter()
-            .find(|a| match a {
-                TokenTree::Literal(_) => true,
-                _ => false,
-            })
+            .find(|a| matches!(a, TokenTree::Literal(_)))
             .map(|a| match a {
                 TokenTree::Literal(lit) => {
                     let s = lit.to_string();
@@ -123,6 +181,7 @@ pub fn use_litcrypt(tokens: TokenStream) -> TokenStream {
     result.into()
 }
 
+/// Encrypts the resp. string with the key set before, via calling [`use_litcrypt!`].
 #[proc_macro]
 pub fn lc(_item: TokenStream) -> TokenStream {
     let mut something = String::from("");
