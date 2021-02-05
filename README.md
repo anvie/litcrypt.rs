@@ -1,7 +1,7 @@
-LITCRYPT
+LITCRYPT ![build status](https://api.travis-ci.org/anvie/litcrypt.rs.svg?branch=master)
 ===========
 
-It is abbreviation from "Literal Encryption", a Rust compiler plugin to encrypt
+It is abbreviation from "Literal Encryption", a Rust proc macro designed to encrypt
 text literal using simple "XOR" algorithm.
 
 LITCRYPT let's you hide your static string literal in the binary from naughty eyes seamlessly
