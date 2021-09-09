@@ -1,7 +1,7 @@
 [package]
 name = "litcrypt"
 authors = ['Robin Syihab (r@ansvia.com)']
-version = "0.2.1"
+version = "0.3.0"
 description = "Let's encrypt your string statically during compile time"
 license = "Apache-2.0"
 repository = "https://github.com/anvie/litcrypt.rs"
@@ -18,6 +18,5 @@ expectest = { version = "0.12.0", features = [] }
 [dependencies]
 quote = "1.0.8"
 proc-macro2 = "1.0.24"
-lazy_static = "1.4.0"
 
 

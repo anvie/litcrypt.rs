@@ -5,7 +5,7 @@
 #[macro_use]
 extern crate litcrypt;
 
-use_litcrypt!("MY-SECRET-SPELL");
+use_litcrypt!();
 
 fn main() {
     // uncomment this for plain (non pre-compile-encrypted string)

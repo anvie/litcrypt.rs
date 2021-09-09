@@ -56,8 +56,6 @@
 //! ```bash
 //! ❯ cargo run --example simple
 //! ```
-#[macro_use]
-extern crate lazy_static;
 extern crate proc_macro;
 extern crate proc_macro2;
 extern crate quote;
@@ -71,37 +69,22 @@ use proc_macro2::Literal;
 use quote::quote;
 use std::env;
 
-use std::sync::{Arc, Mutex};
-
 mod xor;
 
-lazy_static! {
-    static ref MAGIC_SPELL: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
+#[inline(always)]
+fn get_magic_spell() -> String {
+    env::var("LITCRYPT_ENCRYPT_KEY").unwrap_or_else(|_| {
+        panic!("LITCRYPT_ENCRYPT_KEY environment variable not set.")
+    })
 }
 
 /// Sets the encryption key used for encrypting subsequence strings wrapped in a [`lc!`] macro.
 ///
 /// This key is also encrypted an  will not visible in a static analyzer.
 #[proc_macro]
-pub fn use_litcrypt(tokens: TokenStream) -> TokenStream {
-    let magic_spell = env::var("LITCRYPT_ENCRYPT_KEY").ok().or_else(|| {
-        tokens
-            .into_iter()
-            .find(|a| matches!(a, TokenTree::Literal(_)))
-            .map(|a| match a {
-                TokenTree::Literal(lit) => {
-                    let s = lit.to_string();
-                    String::from(&s[1..s.len() - 1])
-                }
-                _ => "default-secret-word".to_string(),
-            })
-    });
+pub fn use_litcrypt(_tokens: TokenStream) -> TokenStream {
+    let magic_spell = get_magic_spell();
 
-    {
-        let mut m_spell = MAGIC_SPELL.lock().unwrap();
-        *m_spell = magic_spell.clone();
-    }
-    // env::set_var("LITCRYPT_ENCRYPT_KEY", magic_spell.as_ref().map(|a| a.to_string()).unwrap());
     let encdec_func = quote! {
         pub mod litcrypt_internal {
             // This XOR code taken from https://github.com/zummenix/xor-rs
@@ -163,15 +146,8 @@ pub fn use_litcrypt(tokens: TokenStream) -> TokenStream {
             }
         }
     };
-    let result = if let Some(ekey) = magic_spell {
-        let ekey = xor::xor(ekey.as_bytes(), b"l33t");
-        let ekey = Literal::byte_string(&ekey);
-        quote! {
-            static LITCRYPT_ENCRYPT_KEY: &'static [u8] = #ekey;
-            #encdec_func
-        }
-    } else {
-        let ekey = xor::xor(b"default-secret-word", b"l33t");
+    let result = {
+        let ekey = xor::xor(magic_spell.as_bytes(), b"l33t");
         let ekey = Literal::byte_string(&ekey);
         quote! {
             static LITCRYPT_ENCRYPT_KEY: &'static [u8] = #ekey;
@@ -183,24 +159,17 @@ pub fn use_litcrypt(tokens: TokenStream) -> TokenStream {
 
 /// Encrypts the resp. string with the key set before, via calling [`use_litcrypt!`].
 #[proc_macro]
-pub fn lc(_item: TokenStream) -> TokenStream {
+pub fn lc(tokens: TokenStream) -> TokenStream {
     let mut something = String::from("");
-    for tok in _item {
+    for tok in tokens {
         something = match tok {
             TokenTree::Literal(lit) => lit.to_string(),
             _ => "<unknown>".to_owned(),
         }
     }
     something = String::from(&something[1..something.len() - 1]);
-    let ekey = {
-        let m_spell = MAGIC_SPELL.lock().unwrap();
-        (*m_spell).clone()
-    };
-    let encrypt_key = match ekey {
-        Some(ref a) => a.as_bytes(),
-        None => b"default-secret-word",
-    };
-    let encrypt_key = xor::xor(encrypt_key, b"l33t");
+    let magic_spell = get_magic_spell();
+    let encrypt_key = xor::xor(magic_spell.as_bytes(), b"l33t");
     let encrypted = xor::xor(&something.as_bytes(), &encrypt_key);
     let encrypted = Literal::byte_string(&encrypted);
 
