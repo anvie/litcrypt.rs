@@ -1,4 +1,4 @@
-LITCRYPT [![Build Status](https://travis-ci.org/anvie/litcrypt.rs.svg?branch=master)](https://travis-ci.org/anvie/litcrypt.rs)
+LITCRYPT [![Build Status](https://travis-ci.org/anvie/litcrypt.rs.svg?branch=master)](https://travis-ci.org/anvie/litcrypt.rs) ![Crates.io](https://img.shields.io/crates/v/litcrypt)
 ===========
 
 It is abbreviation from "Literal Encryption", a Rust proc macro designed to encrypt
