@@ -58,6 +58,7 @@
 //! ```
 extern crate proc_macro;
 extern crate proc_macro2;
+extern crate rand;
 extern crate quote;
 
 #[cfg(test)]
@@ -66,16 +67,22 @@ extern crate expectest;
 
 use proc_macro::{TokenStream, TokenTree};
 use proc_macro2::Literal;
+use rand::{rngs::OsRng, RngCore};
 use quote::quote;
 use std::env;
 
 mod xor;
 
 #[inline(always)]
-fn get_magic_spell() -> String {
-    env::var("LITCRYPT_ENCRYPT_KEY").unwrap_or_else(|_| {
-        panic!("LITCRYPT_ENCRYPT_KEY environment variable not set.")
-    })
+fn get_magic_spell() -> Vec<u8> {
+    match env::var("LITCRYPT_ENCRYPT_KEY") {
+        Ok(key) => {key.as_bytes().to_vec()},
+        Err(_) => {
+            let mut key = vec![0u8; 64];
+            OsRng.fill_bytes(&mut key);
+            key
+        }
+    }
 }
 
 /// Sets the encryption key used for encrypting subsequence strings wrapped in a [`lc!`] macro.
@@ -147,7 +154,7 @@ pub fn use_litcrypt(_tokens: TokenStream) -> TokenStream {
         }
     };
     let result = {
-        let ekey = xor::xor(magic_spell.as_bytes(), b"l33t");
+        let ekey = xor::xor(&magic_spell, b"l33t");
         let ekey = Literal::byte_string(&ekey);
         quote! {
             static LITCRYPT_ENCRYPT_KEY: &'static [u8] = #ekey;
@@ -169,7 +176,7 @@ pub fn lc(tokens: TokenStream) -> TokenStream {
     }
     something = String::from(&something[1..something.len() - 1]);
     let magic_spell = get_magic_spell();
-    let encrypt_key = xor::xor(magic_spell.as_bytes(), b"l33t");
+    let encrypt_key = xor::xor(&magic_spell, b"l33t");
     let encrypted = xor::xor(&something.as_bytes(), &encrypt_key);
     let encrypted = Literal::byte_string(&encrypted);
 
