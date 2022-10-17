@@ -175,6 +175,28 @@ pub fn lc(tokens: TokenStream) -> TokenStream {
         }
     }
     something = String::from(&something[1..something.len() - 1]);
+    
+    encrypt_string(something)
+}
+
+/// Encrypts an environment variable at compile time with the key set before, via calling [`use_litcrypt!`].
+#[proc_macro]
+pub fn lc_env(tokens: TokenStream) -> TokenStream {
+    let mut var_name = String::from("");
+
+    for tok in tokens {
+        var_name = match tok {
+            TokenTree::Literal(lit) => lit.to_string(),
+            _ => "<unknown>".to_owned(),
+        }
+    }
+
+    var_name = String::from(&var_name[1..var_name.len() - 1]);
+
+    encrypt_string(env::var(var_name).unwrap_or(String::from("unknown")))
+}
+
+fn encrypt_string(something: String) -> TokenStream {
     let magic_spell = get_magic_spell();
     let encrypt_key = xor::xor(&magic_spell, b"l33t");
     let encrypted = xor::xor(&something.as_bytes(), &encrypt_key);

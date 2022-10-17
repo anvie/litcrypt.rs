@@ -12,3 +12,8 @@ pub fn test_literal1() {
 pub fn test_literal2() {
     assert_eq!(lc!("Very secret word"), "Very secret word");
 }
+
+#[test]
+pub fn test_env() {
+    assert_eq!(lc_env!("SECRET_ENV"), "Shhhhhh");
+}
