@@ -73,14 +73,23 @@ use std::env;
 
 mod xor;
 
+lazy_static::lazy_static! {
+    static ref RAND_SPELL: [u8; 64] = {
+        let mut key = [0u8; 64];
+        OsRng.fill_bytes(&mut key);
+        key
+    };
+}
+
 #[inline(always)]
 fn get_magic_spell() -> Vec<u8> {
     match env::var("LITCRYPT_ENCRYPT_KEY") {
         Ok(key) => {key.as_bytes().to_vec()},
         Err(_) => {
-            let mut key = vec![0u8; 64];
-            OsRng.fill_bytes(&mut key);
-            key
+            // `lc!` will call this function multi times
+            // we must provide exact same result for each invocation
+            // so use static lazy field for cache
+            RAND_SPELL.to_vec()
         }
     }
 }
