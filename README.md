@@ -1,12 +1,9 @@
 LITCRYPT [![Build Status](https://travis-ci.org/anvie/litcrypt.rs.svg?branch=master)](https://travis-ci.org/anvie/litcrypt.rs) ![Crates.io](https://img.shields.io/crates/v/litcrypt)
 ===========
 
-It is abbreviation from "Literal Encryption", a Rust proc macro designed to encrypt
-text literal using simple "XOR" algorithm, this will hide your plain string from static analyzer
-and protect your valuable app from cracking activity.
+Is a short name of "Literal Encryption", a Rust proc macro that encrypts text using a basic XOR method. It protect plain text from static analysis tools and helps keep your important app safe from cracking activity.
 
-LITCRYPT works by encrypting string literal at compile-time, the encrypted
-string remain encrypted in both disk and memory at runtime, only decrypted when used.
+LITCRYPT encrypts strings when compiling, keeping them encrypted in both disk and memory while running, and only decrypting them when needed.
 
 USAGE
 -----
