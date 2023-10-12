@@ -179,11 +179,23 @@ pub fn lc(tokens: TokenStream) -> TokenStream {
     let mut something = String::from("");
     for tok in tokens {
         something = match tok {
-            TokenTree::Literal(lit) => lit.to_string(),
+            TokenTree::Literal(lit) => {
+                let mut lit_str: String = lit.to_string(); 
+                let first_occurrence = lit_str.find("\"");
+                let last_occurrence = lit_str.rfind("\"");
+
+                if !first_occurrence.is_none() && !last_occurrence.is_none(){
+                    lit_str = lit_str[first_occurrence.unwrap() + 1..last_occurrence.unwrap()].to_string();
+                }
+                else {
+                    lit_str = lit_str[1..lit_str.len() - 1].to_string();
+                }
+
+                lit_str
+            },
             _ => "<unknown>".to_owned(),
         }
     }
-    something = String::from(&something[1..something.len() - 1]);
     
     encrypt_string(something)
 }

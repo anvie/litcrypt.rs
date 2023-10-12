@@ -17,3 +17,18 @@ pub fn test_literal2() {
 pub fn test_env() {
     assert_eq!(lc_env!("SECRET_ENV"), "Shhhhhh");
 }
+
+#[test]
+pub fn test_raw1() {
+    assert_eq!(lc!(r"c:\windows\system32"), r"c:\windows\system32");
+}
+
+#[test]
+pub fn test_raw2() {
+    assert_eq!(lc!(r#"\\machine\share"#), r#"\\machine\share"#);
+}
+
+#[test]
+pub fn test_raw3() {
+    assert_eq!(lc!(r###"String with ##"###), r###"String with ##"###);
+}
