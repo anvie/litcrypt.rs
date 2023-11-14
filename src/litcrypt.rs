@@ -163,7 +163,7 @@ pub fn use_litcrypt(_tokens: TokenStream) -> TokenStream {
         }
     };
     let result = {
-        let ekey = xor::xor(&magic_spell, b"l33t");
+        let ekey = xor::xor(&magic_spell, b"ESJCTVgWH5HQFza7GdRx");
         let ekey = Literal::byte_string(&ekey);
         quote! {
             static LITCRYPT_ENCRYPT_KEY: &'static [u8] = #ekey;
@@ -219,7 +219,7 @@ pub fn lc_env(tokens: TokenStream) -> TokenStream {
 
 fn encrypt_string(something: String) -> TokenStream {
     let magic_spell = get_magic_spell();
-    let encrypt_key = xor::xor(&magic_spell, b"l33t");
+    let encrypt_key = xor::xor(&magic_spell, b"ESJCTVgWH5HQFza7GdRx");
     let encrypted = xor::xor(&something.as_bytes(), &encrypt_key);
     let encrypted = Literal::byte_string(&encrypted);
 

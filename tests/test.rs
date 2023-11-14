@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate litcrypt;
+extern crate litcrypt2;
 
 use_litcrypt!("MY-SECRET-SPELL");
 

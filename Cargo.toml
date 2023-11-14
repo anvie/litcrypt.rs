@@ -1,12 +1,12 @@
 [package]
-name = "litcrypt"
-authors = ['Robin Syihab (r@ansvia.com)']
-version = "0.4.0"
+name = "litcrypt2"
+authors = ['Robin Syihab (r@ansvia.com)', 'Kurosh Dabbagh Escalante (@_Kudaes_)']
+version = "0.1.0"
 description = "Let's encrypt your string statically during compile time"
 license = "Apache-2.0"
-repository = "https://github.com/anvie/litcrypt.rs"
+repository = "https://github.com/Kudaes/litcrypt.rs"
 readme = "README.md"
-keywords = ["litcrypt", "encrypt", "compile"]
+keywords = ["litcrypt", "encrypt", "obfuscation"]
 
 [lib]
 proc-macro = true
