@@ -58,8 +58,8 @@
 //! ```
 extern crate proc_macro;
 extern crate proc_macro2;
-extern crate rand;
 extern crate quote;
+extern crate rand;
 
 #[cfg(test)]
 #[macro_use(expect)]
@@ -67,8 +67,8 @@ extern crate expectest;
 
 use proc_macro::{TokenStream, TokenTree};
 use proc_macro2::Literal;
-use rand::{rngs::OsRng, RngCore};
 use quote::quote;
+use rand::{rngs::OsRng, RngCore};
 use std::env;
 
 mod xor;
@@ -84,7 +84,7 @@ lazy_static::lazy_static! {
 #[inline(always)]
 fn get_magic_spell() -> Vec<u8> {
     match env::var("LITCRYPT_ENCRYPT_KEY") {
-        Ok(key) => {key.as_bytes().to_vec()},
+        Ok(key) => key.as_bytes().to_vec(),
         Err(_) => {
             // `lc!` will call this function multi times
             // we must provide exact same result for each invocation
@@ -184,7 +184,7 @@ pub fn lc(tokens: TokenStream) -> TokenStream {
         }
     }
     something = String::from(&something[1..something.len() - 1]);
-    
+
     encrypt_string(something)
 }
 
@@ -208,7 +208,7 @@ pub fn lc_env(tokens: TokenStream) -> TokenStream {
 fn encrypt_string(something: String) -> TokenStream {
     let magic_spell = get_magic_spell();
     let encrypt_key = xor::xor(&magic_spell, b"l33t");
-    let encrypted = xor::xor(&something.as_bytes(), &encrypt_key);
+    let encrypted = xor::xor(something.as_bytes(), &encrypt_key);
     let encrypted = Literal::byte_string(&encrypted);
 
     let result = quote! {
