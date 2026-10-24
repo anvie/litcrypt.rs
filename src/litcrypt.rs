@@ -13,7 +13,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! litcrypt = "0.2"
+//! litcrypt = "0.4"
 //! ```
 //!
 //! # Example
@@ -22,20 +22,21 @@
 //! #[macro_use]
 //! extern crate litcrypt;
 //!
-//! use_litcrypt!("MY-SECRET-SPELL");
+//! use_litcrypt!();
 //!
 //! fn main(){
 //!     println!("his name is: {}", lc!("Voldemort"));
 //! }
 //! ```
 //!
-//! The [`use_litcrypt!`] macro must be called first, for initialization. Its parameter is the
-//! secret key that is used to encrypt all [`lc!`]-wrapped string literal(s).
-//! This key is also encrypted and will not visible in a static analyzer.
+//! The [`use_litcrypt!`] macro must be called first, for initialization.
+//! In version 0.4, macro arguments are ignored; they do not configure the key.
+//! The key comes from `LITCRYPT_ENCRYPT_KEY`, or is randomly generated if that
+//! environment variable is not set.
 //!
 //! Only after that can you use the [`lc!`] macro.
 //!
-//! You can also override the key using an environment variable `LITCRYPT_ENCRYPT_KEY` e.g:
+//! You can supply a key using the environment variable `LITCRYPT_ENCRYPT_KEY`, e.g:
 //! ```bash
 //! ❯ export LITCRYPT_ENCRYPT_KEY="myverysuperdupermegaultrasecretkey"
 //! ```
@@ -94,9 +95,10 @@ fn get_magic_spell() -> Vec<u8> {
     }
 }
 
-/// Sets the encryption key used for encrypting subsequence strings wrapped in a [`lc!`] macro.
+/// Initializes support for strings wrapped in an [`lc!`] macro.
 ///
-/// This key is also encrypted an  will not visible in a static analyzer.
+/// Arguments are ignored. The key is read from `LITCRYPT_ENCRYPT_KEY`, or randomly
+/// generated when that environment variable is not set.
 #[proc_macro]
 pub fn use_litcrypt(_tokens: TokenStream) -> TokenStream {
     let magic_spell = get_magic_spell();
