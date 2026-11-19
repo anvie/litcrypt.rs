@@ -29,13 +29,12 @@ fn main(){
 }
 ```
 
-`use_litcrypt!` macro call should be called first for initialization before you
-can use `lc!` macro function. The first parameter is your secret key used for
-encrypt your literal string. This key is also encrypted and will not visible
-under static analyzer.
+Call `use_litcrypt!()` first for initialization before using `lc!`.
+In version 0.4, arguments to `use_litcrypt!` are ignored; passing a string to
+the macro does not configure the key.
 
-Please take note that you need to set your encryption key using environment
-variable `LITCRYPT_ENCRYPT_KEY` before compile: e.g:
+To supply a key, set the environment variable `LITCRYPT_ENCRYPT_KEY` before
+compiling. If it is not set, the macro uses a randomly generated key. For example:
 
 export LITCRYPT_ENCRYPT_KEY="myverysuperdupermegaultrasecretkey"
 
